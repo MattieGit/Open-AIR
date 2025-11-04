@@ -271,7 +271,14 @@ binary_sensor:
       number: GPIO35
       mode:
         input: true
+        pullup: true
       inverted: true # Change to false if using a pre-V1.4.0 mechanical switch
+    on_press:
+      then:
+        - lambda: 'id(fast_update_ticks) = 3;'
+    on_release:
+      then:
+        - lambda: 'id(fast_update_ticks) = 3;'
 
 # ---------- COMMANDS ----------
 switch:

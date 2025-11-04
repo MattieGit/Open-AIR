@@ -17,6 +17,9 @@ binary_sensor:
     id: valve_homing_switch
     pin:
       number: GPIO35
+      mode:
+        input: true
+        pullup: true
       inverted: true #Change this to "false" if you hava a homing switch from pre V1.4.0 Open AIR Valve.
     name: "Valve Closed Switch"
 ```
