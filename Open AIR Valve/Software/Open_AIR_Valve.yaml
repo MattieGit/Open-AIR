@@ -173,9 +173,9 @@ valve:
           if (steps < 0) steps = 0;
           if (steps > 525) steps = 525;
 
-          auto &stepper = id(my_stepper);
-          int current_steps = stepper.current_position;
-          stepper.set_target(steps);
+          auto *stepper = id(my_stepper);
+          int current_steps = stepper->current_position;
+          stepper->set_target(steps);
 
           // Optimistic reporting: remember & publish exactly what we asked for
           id(last_cmd_pos) = requested;
@@ -201,11 +201,11 @@ interval:
             lambda: 'return id(fast_update_ticks) > 0;'
           then:
             - lambda: |-
-                auto &stepper = id(my_stepper);
-                bool at_target = stepper.current_position == stepper.target_position;
+                auto *stepper = id(my_stepper);
+                bool at_target = stepper->current_position == stepper->target_position;
                 if (at_target) {
                   id(air_valve).current_operation = VALVE_OPERATION_IDLE;
-                } else if (stepper.current_position < stepper.target_position) {
+                } else if (stepper->current_position < stepper->target_position) {
                   id(air_valve).current_operation = VALVE_OPERATION_OPENING;
                 } else {
                   id(air_valve).current_operation = VALVE_OPERATION_CLOSING;
