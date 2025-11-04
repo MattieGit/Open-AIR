@@ -9,15 +9,19 @@ Change the "X" in `open-air-valve.yaml` with a number or a letter. This will hel
 ## Hall Sensor Homing
 
 Since hardware version V1.4.0 of the Open AIR Valve , the Omron Switch is changed for a more reliable mechanism: A hall sensor.
-The signal of the sensor is inverted! so a small change to your YAML file is needed if you upgrade.
+Depending on wiring the sensor might be active-high or active-low. Use the substitution `valve_closed_switch_inverted`
+to flip the logic when required.
 
 ```yaml
+substitutions:
+  valve_closed_switch_inverted: "false"  # set to "true" if your hall sensor is active-low
+
 binary_sensor:
   - platform: gpio
     id: valve_homing_switch
     pin:
       number: GPIO35
-      inverted: true #Change this to "false" if you hava a homing switch from pre V1.4.0 Open AIR Valve.
+      inverted: ${valve_closed_switch_inverted}
     name: "Valve Closed Switch"
 ```
 
