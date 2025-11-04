@@ -125,6 +125,11 @@ globals:
     type: float
     restore_value: yes
     initial_value: '0.0'
+  # Countdown for fast state refresh after commands
+  - id: fast_update_ticks
+    type: int
+    restore_value: no
+    initial_value: '0'
 
 # ---------- VALVE ENTITY ----------
 valve:
@@ -141,6 +146,7 @@ valve:
           id(last_cmd_pos) = 1.0f;
           id(air_valve).position = 1.0f;
           id(air_valve).current_operation = VALVE_OPERATION_OPENING;
+          id(fast_update_ticks) = 15;
           id(air_valve).publish_state();
 
     close_action:
@@ -149,47 +155,69 @@ valve:
           id(last_cmd_pos) = 0.0f;
           id(air_valve).position = 0.0f;
           id(air_valve).current_operation = VALVE_OPERATION_CLOSING;
+          id(fast_update_ticks) = 15;
           id(air_valve).publish_state();
 
     position_action:
       - lambda: |-
           // pos is 0.0..1.0
-          float pct = pos * 100.0f;
-          if (pct <= 0.0f) {
-            id(my_stepper).set_target(0);
-            id(last_cmd_pos) = 0.0f;
-            id(air_valve).position = 0.0f;
-            id(air_valve).current_operation = VALVE_OPERATION_IDLE;
-            id(air_valve).publish_state();
-            return;
-          }
-          if (pct >= 100.0f) {
-            id(my_stepper).set_target(525);
-            id(last_cmd_pos) = 1.0f;
-            id(air_valve).position = 1.0f;
-            id(air_valve).current_operation = VALVE_OPERATION_IDLE;
-            id(air_valve).publish_state();
-            return;
-          }
+          float requested = pos;
+          if (requested < 0.0f) requested = 0.0f;
+          if (requested > 1.0f) requested = 1.0f;
 
-          int i = (int) roundf(pct);
-          if (i < 0) i = 0;
-          if (i > 100) i = 100;
+          int index = (int) roundf(requested * 100.0f);
+          if (index < 0) index = 0;
+          if (index > 100) index = 100;
 
-          int steps = id(valve_capacity_lookup_table)[i];
+          int steps = id(valve_capacity_lookup_table)[index];
           if (steps < 0) steps = 0;
           if (steps > 525) steps = 525;
 
-          id(my_stepper).set_target(steps);
+          auto &stepper = id(my_stepper);
+          int current_steps = stepper.current_position;
+          stepper.set_target(steps);
 
           // Optimistic reporting: remember & publish exactly what we asked for
-          id(last_cmd_pos) = pos;
-          id(air_valve).position = pos;
-          id(air_valve).current_operation = VALVE_OPERATION_IDLE;
+          id(last_cmd_pos) = requested;
+          id(air_valve).position = requested;
+
+          if (steps == current_steps) {
+            id(air_valve).current_operation = VALVE_OPERATION_IDLE;
+            id(fast_update_ticks) = 0;
+          } else {
+            id(air_valve).current_operation =
+              (steps > current_steps) ? VALVE_OPERATION_OPENING : VALVE_OPERATION_CLOSING;
+            id(fast_update_ticks) = 15;
+          }
+
           id(air_valve).publish_state();
 
 # Periodic republish to keep HA in sync (does NOT recompute position)
 interval:
+  - interval: 1s
+    then:
+      - if:
+          condition:
+            lambda: 'return id(fast_update_ticks) > 0;'
+          then:
+            - lambda: |-
+                auto &stepper = id(my_stepper);
+                bool at_target = stepper.current_position == stepper.target_position;
+                if (at_target) {
+                  id(air_valve).current_operation = VALVE_OPERATION_IDLE;
+                } else if (stepper.current_position < stepper.target_position) {
+                  id(air_valve).current_operation = VALVE_OPERATION_OPENING;
+                } else {
+                  id(air_valve).current_operation = VALVE_OPERATION_CLOSING;
+                }
+                id(air_valve).position = id(last_cmd_pos);
+                id(air_valve).publish_state();
+                if (at_target) {
+                  id(fast_update_ticks) = 0;
+                } else if (id(fast_update_ticks) > 0) {
+                  id(fast_update_ticks)--;
+                }
+
   - interval: 60s
     then:
       - lambda: |-
@@ -274,6 +302,7 @@ button:
             id(last_cmd_pos) = 0.0f;
             id(air_valve).position = id(last_cmd_pos);
             id(air_valve).current_operation = VALVE_OPERATION_IDLE;
+            id(fast_update_ticks) = 3;
             id(air_valve).publish_state();
 
 # ---------- SENSORS ----------
