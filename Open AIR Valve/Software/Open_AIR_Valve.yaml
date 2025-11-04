@@ -3,7 +3,6 @@ substitutions:
   # --- per-device names ---
   devicename: open-air-valve-1          # Lowercase, no spaces
   upper_devicename: Open AIR Valve 1    # UI Name
-  valve_closed_switch_inverted: "false" # Set to "true" if your hall sensor is active-low
 
 esphome:
   name: ${devicename}
@@ -272,7 +271,7 @@ binary_sensor:
       number: GPIO35
       mode:
         input: true
-      inverted: ${valve_closed_switch_inverted}
+      inverted: true # Change to false if using a pre-V1.4.0 mechanical switch
 
 # ---------- COMMANDS ----------
 switch:

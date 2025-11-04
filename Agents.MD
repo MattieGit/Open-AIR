@@ -8,7 +8,7 @@
 - The authoritative YAML lives in `Open AIR Valve/Software/Open_AIR_Valve.yaml`.
 - We removed the duplicate `Valve/Open_AIR_Valve.yaml`; keep the configuration centralized under `Open AIR Valve/Software/`.
 - The valve template now includes a `fast_update_ticks` global plus a 1 s interval loop to publish quick status updates right after commands. Preserve this structure and adjust the tick count if you need longer/shorter refresh bursts.
-- Hall sensor polarity is controlled through the `valve_closed_switch_inverted` substitution (default `"false"`). Flip it to `"true"` if a deployment reports the closed switch backward.
+- Hall sensor input on GPIO35 uses `inverted: true` by default. Only flip this to `false` if you encounter a legacy mechanical switch that reports the closed state correctly without inversion.
 
 ## Testing & Deployment
 - No automated tests exist in the repo. Validate changes by compiling/deploying with ESPHome as needed.
