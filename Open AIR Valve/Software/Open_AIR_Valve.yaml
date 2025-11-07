@@ -273,7 +273,7 @@ binary_sensor:
     name: "${upper_devicename} Closed Switch"
     pin:
       number: GPIO35
-    inverted: true # Change to false if using a pre-V1.4.0 mechanical switch
+      inverted: true # Change to false if using a pre-V1.4.0 mechanical switch
     on_press:
       then:
         - lambda: 'id(fast_update_ticks) = 10;'
