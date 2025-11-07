@@ -155,7 +155,6 @@ valve:
           id(air_valve).current_operation = VALVE_OPERATION_OPENING;
           id(fast_update_ticks) = 15;
           id(air_valve).publish_state();
-      - component.update: valve_homing_switch
 
     close_action:
       - lambda: |-
@@ -165,7 +164,6 @@ valve:
           id(air_valve).current_operation = VALVE_OPERATION_CLOSING;
           id(fast_update_ticks) = 15;
           id(air_valve).publish_state();
-      - component.update: valve_homing_switch
 
     position_action:
       - lambda: |-
@@ -200,7 +198,6 @@ valve:
           }
 
           id(air_valve).publish_state();
-      - component.update: valve_homing_switch
 
 # Periodic republish to keep HA in sync (does NOT recompute position)
 interval:
@@ -210,7 +207,6 @@ interval:
           condition:
             lambda: 'return id(fast_update_ticks) > 0;'
           then:
-            - component.update: valve_homing_switch
             - lambda: |-
                 auto *stepper = id(my_stepper);
                 bool at_target = stepper->current_position == stepper->target_position;
